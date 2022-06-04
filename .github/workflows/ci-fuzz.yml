@@ -1,19 +1,53 @@
 name: CIFuzz
 on: [pull_request]
 jobs:
+  build:
+   runs-on: ubuntu-latest    
+   steps:
+   
+      - uses: actions/checkout@v2
+        name: Check out code
+        
+      - name: Build and push docker image
+        uses: mr-smithers-excellent/docker-build-push@v4
+        with:
+          image: khushi2/oss-fuzz
+          registry: docker.io
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
   Fuzzing:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ matrix.sanitizer }}-${{ github.ref }}
+      cancel-in-progress: true
+   
+    strategy:
+        fail-fast: false
+        matrix:
+            sanitizer: 
+              - address
+            engine:
+               - afl
+    env:
+      engine: afl
+      SANITIZER: address
+      ARCHITECTURE: x86_64          
+    
     steps:
+    - uses: actions/checkout@v3
     - name: Build Fuzzers
       uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
       with:
         oss-fuzz-project-name: 'cjson'
         dry-run: false
+        language: c++
     - name: Run Fuzzers
       uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
       with:
         oss-fuzz-project-name: 'cjson'
         fuzz-seconds: 600
+        language: c++
         dry-run: false
     - name: Upload Crash
       uses: actions/upload-artifact@v1
