@@ -15,4 +15,4 @@
 #
 ################################################################################
 # Run the OSS-Fuzz script in the project
-$SRC/cjson/fuzzing/ossfuzz.sh
+$SRC/afl1/fuzzing/ossfuzz.sh
